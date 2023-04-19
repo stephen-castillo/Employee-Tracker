@@ -4,7 +4,19 @@ const prompts = require('./assets/prompts');
 const db = require('./assets/connection');
 //console.log(db);
 
+function viewDept(){
+    db.promise().query("SELECT * FROM department")
+    .then( ([rows,fields]) => {
+        if(rows.length === 0){
+            console.log('There are no results.');
+        }else{
+            console.table(rows);
+        }
+    });
+}
+
 async function init(){
+    
     console.log('Starting..');
     
     await inquirer.prompt(prompts)
@@ -13,14 +25,7 @@ async function init(){
         switch(answers.options){
             case 'View all departments':
                 console.log('viewing all departments:');
-                db.promise().query("SELECT * FROM department")
-                .then( ([rows,fields]) => {
-                    if(rows.length === 0){
-                        console.log('There are no results.');
-                    }else{
-                        console.table(rows);
-                    }
-                });
+                viewDept();
             break;
             
             case 'View all roles':
@@ -77,6 +82,7 @@ async function init(){
 
             default:
                 console.log('Quiting program');
+                db.end();
             break;
         }
     });
@@ -84,5 +90,4 @@ async function init(){
 
 (async () => {
     await init();
-    db.end();
   })();
