@@ -80,7 +80,6 @@ async function init(){
             break;
         }
     });
-    init();
 }
 
 (async () => {
