@@ -12,12 +12,13 @@ function viewDept(){
         }else{
             console.table(rows);
         }
+        init();
     });
 }
 
 async function init(){
     
-    console.log('Starting..');
+    
     
     await inquirer.prompt(prompts)
     .then(answers =>{
@@ -30,6 +31,7 @@ async function init(){
             
             case 'View all roles':
                 console.log('viewing roles');
+                init();
             break;
 
             case 'View all employees':
@@ -88,6 +90,8 @@ async function init(){
     });
 }
 
-(async () => {
+/* (async () => {
     await init();
-  })();
+  })(); */
+console.log('Starting..');
+init();
