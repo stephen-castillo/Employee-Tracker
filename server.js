@@ -1,8 +1,7 @@
 const inquirer = require('inquirer');
 const ctable = require('console.table');
 const prompts = require('./assets/prompts');
-//const db = require('./assets/connection');
-
+const db = require('./assets/connection');
 //console.log(db);
 
 async function init(){
@@ -13,7 +12,15 @@ async function init(){
         console.log(answers);
         switch(answers.options){
             case 'View all departments':
-                console.log('viewing roles');
+                console.log('viewing all departments:');
+                db.promise().query("SELECT * FROM department")
+                .then( ([rows,fields]) => {
+                    if(rows.length === 0){
+                        console.log('There are no results.');
+                    }else{
+                        console.table(rows);
+                    }
+                });
             break;
             
             case 'View all roles':
@@ -72,8 +79,8 @@ async function init(){
                 console.log('Quiting program');
             break;
         }
-    });   
-    
+    });
+    init();
 }
 
 (async () => {

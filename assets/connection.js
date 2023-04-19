@@ -14,10 +14,6 @@ const db = mysql.createConnection(
 db.connect(function(err) {
     if (err) throw err;
     console.log("Connected!");
-    con.query("CREATE DATABASE IF NOT EXISTS employee_db", function (err, result) {
-        if (err) throw err;
-        console.log("Database created");
-      });
 });
 
 module.exports = db;
