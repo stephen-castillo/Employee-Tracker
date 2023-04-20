@@ -12,7 +12,6 @@ function viewDept(){
         }else{
             console.table(rows);
         }
-        init();
     });
 }
 
@@ -24,7 +23,6 @@ function viewRole(){
         }else{
             console.table(rows);
         }
-        init();
     });
 }
 
@@ -36,7 +34,6 @@ function viewEmployee(){
         }else{
             console.table(rows);
         }
-        init();
     });
 }
 
@@ -49,7 +46,6 @@ function viewByManager(){
         }else{
             console.table(rows);
         }
-        init();
     });
 }
 
@@ -61,7 +57,6 @@ function viewByDepartment(){
         }else{
             console.table(rows);
         }
-        init();
     });
 }
 
@@ -85,7 +80,6 @@ async function addDepartment(){
             //console.log(fields);
         });
         db.unprepare();
-        init();
     });
 }
 
@@ -128,7 +122,73 @@ async function addRole(){
                     //console.log(fields);
                 });
                 db.unprepare();
-                init();
+            });
+        }
+    });    
+}
+
+async function addEmployee(){
+    var roleOptions = [];
+    
+    await db.promise().query('SELECT title, id as value FROM roles')
+    .then( ([rows,fields]) => {
+        if(rows.length === 0){
+            console.log('Cannot add a employee because no roles are available for the employee.');
+            return;
+        }else{
+            roleOptions = rows;
+            return roleOptions;
+        }
+    });
+
+    await db.promise().query("SELECT CONCAT(first_name, ' ', last_name) as name, id as value FROM employees")
+    .then( ([rows,fields]) => {
+        if(rows.length === 0){
+            console.log('Cannot add a manager for the employee because no employees are available for the role.');
+            return;
+        }else{
+            //console.log(rows);
+            $noneManager = {name: "None", value: null}
+
+            rows.push($noneManager);
+            
+            inquirer.prompt([{
+                type: 'input',
+                message: "What is the employee's first name?",
+                name: 'firstName',
+        
+            },
+            {
+                type: 'input',
+                message: "What is the employee's last name?",
+                name: 'lastName',
+        
+            },
+            {
+                type: 'list',
+                message: "What role does this employee have?",
+                name: 'roleID',
+                choices: roleOptions
+            },
+            {
+                type: 'list',
+                message: "Who is this employee's supervisor",
+                name: 'managerID',
+                choices: rows
+            }])
+            .then(answers => {
+                console.log(answers);
+                db.execute('INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)',
+                [answers.roleName, answers.salary, answers.deptID], 
+                function(err, results,fields){
+                    if(err){
+                        console.error(err);
+                    }
+                    //console.log(results);
+                    //console.log(fields);
+                });
+                db.unprepare();
+                
             });
         }
     });    
@@ -144,6 +204,7 @@ async function init(){
                 console.log('Viewing all departments:');
                 console.log('');
                 viewDept();
+                init();
             break;
             
             case 'View all roles':
@@ -151,6 +212,7 @@ async function init(){
                 console.log('Viewing all roles:');
                 console.log('');
                 viewRole();
+                init();
             break;
 
             case 'View all employees':
@@ -158,6 +220,7 @@ async function init(){
                 console.log('Viewing all employees:');
                 console.log('');
                 viewEmployee();
+                init();
             break;
 
             case 'View employees by manager':
@@ -165,6 +228,7 @@ async function init(){
                 console.log('Viewing employees by manager:');
                 console.log('');
                 viewByManager();
+                init();
             break;
 
             case 'View employees by department':
@@ -172,6 +236,7 @@ async function init(){
                 console.log('Viewing employees by department:');
                 console.log('');
                 viewByDepartment();
+                init();
             break;
 
             case 'Add a department':
@@ -179,6 +244,7 @@ async function init(){
                 console.log('Adding a department:');
                 console.log('');
                 addDepartment();
+                init();
             break;
 
             case 'Add a role':
@@ -186,48 +252,63 @@ async function init(){
                 console.log('Adding a role:');
                 console.log('');
                 addRole();
+                init();
             break;
 
             case 'Add an employee':
                 console.log('');
-                console.log('viewing roles');
+                console.log('Adding an employee.');
                 console.log('');
+                addEmployee();
+                init();
             break;
 
             case 'Update an employee role':
                 console.log('');
                 console.log('viewing roles');
                 console.log('');
+
+                init();
             break;
 
             case 'Update employee managers':
                 console.log('');
                 console.log('viewing roles');
                 console.log('');
+
+                init();
             break;
 
             case 'Delete a department':
                 console.log('');
                 console.log('viewing roles');
                 console.log('');
+
+                init();
             break;
 
             case 'Delete a role':
                 console.log('');
                 console.log('viewing roles');
                 console.log('');
+
+                init();
             break;
 
             case 'Delete an employee':
                 console.log('');
                 console.log('viewing roles');
                 console.log('');
+
+                init();
             break;
 
             case 'View the total utilized budget of a department':
                 console.log('');
                 console.log('viewing roles');
                 console.log('');
+
+                init();
             break;
 
             default:
