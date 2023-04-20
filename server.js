@@ -178,8 +178,9 @@ async function addEmployee(){
             }])
             .then(answers => {
                 console.log(answers);
-                db.execute('INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)',
-                [answers.roleName, answers.salary, answers.deptID], 
+                return;
+                db.execute('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)',
+                [answers.firstName, answers.lastName, answers.roleID, answer.managerID], 
                 function(err, results,fields){
                     if(err){
                         console.error(err);
@@ -188,140 +189,131 @@ async function addEmployee(){
                     //console.log(fields);
                 });
                 db.unprepare();
-                
             });
         }
     });    
 }
 
-async function init(){
-    await inquirer.prompt(prompts)
-    .then(answers =>{
-        //console.log(answers);
-        switch(answers.options){
+async function init() {
+    let keepPrompting = true;
+  
+    while (keepPrompting) {
+      const answers = await inquirer.prompt(prompts);
+  
+        switch (answers.options) {
             case 'View all departments':
-                console.log('');
                 console.log('Viewing all departments:');
                 console.log('');
-                viewDept();
-                init();
-            break;
-            
+                await viewDept();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'View all roles':
-                console.log('');
                 console.log('Viewing all roles:');
                 console.log('');
-                viewRole();
-                init();
-            break;
-
+                await viewRole();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'View all employees':
-                console.log('');
                 console.log('Viewing all employees:');
                 console.log('');
-                viewEmployee();
-                init();
-            break;
-
+                await viewEmployee();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'View employees by manager':
-                console.log('');
                 console.log('Viewing employees by manager:');
                 console.log('');
-                viewByManager();
-                init();
-            break;
-
+                await viewByManager();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'View employees by department':
-                console.log('');
                 console.log('Viewing employees by department:');
                 console.log('');
-                viewByDepartment();
-                init();
-            break;
-
+                await viewByDepartment();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'Add a department':
-                console.log('');
                 console.log('Adding a department:');
                 console.log('');
-                addDepartment();
-                init();
-            break;
-
+                await addDepartment();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'Add a role':
-                console.log('');
                 console.log('Adding a role:');
                 console.log('');
-                addRole();
-                init();
-            break;
-
+                await addRole();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'Add an employee':
+                console.log('Adding an employee:');
                 console.log('');
-                console.log('Adding an employee.');
-                console.log('');
-                addEmployee();
-                init();
-            break;
-
+                await addEmployee();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'Update an employee role':
+                console.log('Updating an employee role:');
                 console.log('');
-                console.log('viewing roles');
-                console.log('');
-
-                init();
-            break;
-
+                await updateEmployeeRole();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'Update employee managers':
+                console.log('Updating employee managers:');
                 console.log('');
-                console.log('viewing roles');
-                console.log('');
-
-                init();
-            break;
-
+                await updateEmployeeManager();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'Delete a department':
+                console.log('Deleting a department:');
                 console.log('');
-                console.log('viewing roles');
-                console.log('');
-
-                init();
-            break;
-
+                await deleteDepartment();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'Delete a role':
+                console.log('Deleting a role:');
                 console.log('');
-                console.log('viewing roles');
-                console.log('');
-
-                init();
-            break;
-
+                await deleteRole();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'Delete an employee':
+                console.log('Deleting an employee:');
                 console.log('');
-                console.log('viewing roles');
-                console.log('');
-
-                init();
-            break;
-
+                await deleteEmployee();
+                console.log('Press any arrow key to continue.');
+                break;
+    
             case 'View the total utilized budget of a department':
+                console.log('Viewing the total utilized budget of a department:');
                 console.log('');
-                console.log('viewing roles');
-                console.log('');
-
-                init();
-            break;
-
-            default:
-                console.log('');
+                await viewBudget();
+                console.log('Press any arrow key to continue.');
+                break;
+    
+            case 'Quit program':
                 console.log('Quiting program');
                 db.end();
-            break;
+                keepPrompting = false;
+                break;
+    
+            default:
+                console.log('Invalid option selected. Please try again.');
+                break;
         }
-    });
+    }
 }
+  
 
-/* (async () => {
-    await init();
-  })(); */
 console.log('Starting..');
-init();
+(async () => {
+    await init();
+  })();
