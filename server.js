@@ -2,14 +2,20 @@ const inquirer = require('inquirer');
 const ctable = require('console.table');
 const prompts = require('./assets/prompts');
 const db = require('./assets/connection');
-//console.log(db);
+const kleur = require('kleur');
+console.log(kleur.green('This message is in green!'));
+
+
+
 
 function viewDept(){
     db.promise().query("SELECT * FROM department")
     .then( ([rows,fields]) => {
         if(rows.length === 0){
-            console.log('There are no results.');
+            console.log('\n\n');
+            console.log(kleur.red('There are no results.'));
         }else{
+            console.log('\n\n');
             console.table(rows);
         }
     });
@@ -19,8 +25,10 @@ function viewRole(){
     db.promise().query("SELECT * FROM roles")
     .then( ([rows,fields]) => {
         if(rows.length === 0){
+            console.log('\n\n');
             console.log('There are no results.');
         }else{
+            console.log('\n\n');
             console.table(rows);
         }
     });
@@ -30,8 +38,10 @@ function viewEmployee(){
     db.promise().query("SELECT * FROM employees")
     .then( ([rows,fields]) => {
         if(rows.length === 0){
+            console.log('\n\n');
             console.log('There are no results.');
         }else{
+            console.log('\n\n');
             console.table(rows);
         }
     });
@@ -42,8 +52,10 @@ function viewByManager(){
     db.promise().query("SELECT CONCAT(m.first_name, ' ',  m.last_name) AS manager, e.id, e.first_name, e.last_name FROM employees e JOIN employees m ON e.manager_id = m.id WHERE e.manager_id IS NOT NULL")
     .then( ([rows,fields]) => {
         if(rows.length === 0){
+            console.log('\n\n');
             console.log('There are no results.');
         }else{
+            console.log('\n\n');
             console.table(rows);
         }
     });
@@ -53,8 +65,10 @@ function viewByDepartment(){
     db.promise().query("SELECT d.name AS `Department`, CONCAT(e.first_name,' ', e.last_name) AS Employee, r.title FROM employees e JOIN roles r ON r.id = e.role_id JOIN department d ON d.id = r.department_id ORDER BY d.name, r.title")
     .then( ([rows,fields]) => {
         if(rows.length === 0){
+            console.log('\n\n');
             console.log('There are no results.');
         }else{
+            console.log('\n\n');
             console.table(rows);
         }
     });
@@ -76,6 +90,7 @@ async function addDepartment(){
             if(err){
                 console.error(err);
             }
+            console.log('\n\n');
             console.log(results);
             //console.log(fields);
         });
@@ -87,6 +102,7 @@ async function addRole(){
     await db.promise().query('SELECT name, id as value FROM department')
     .then( ([rows,fields]) => {
         if(rows.length === 0){
+            console.log('\n\n');
             console.log('Cannot add a role because no departments are available for the role.');
             return;
         }else{
@@ -118,7 +134,8 @@ async function addRole(){
                     if(err){
                         console.error(err);
                     }
-                    //console.log(results);
+                    console.log('\n\n');
+                    console.log(results);
                     //console.log(fields);
                 });
                 db.unprepare();
@@ -127,72 +144,76 @@ async function addRole(){
     });    
 }
 
-async function addEmployee(){
-    var roleOptions = [];
-    
-    await db.promise().query('SELECT title, id as value FROM roles')
-    .then( ([rows,fields]) => {
-        if(rows.length === 0){
-            console.log('Cannot add a employee because no roles are available for the employee.');
+async function addEmployee() {
+    try {
+        let roleOptions = [];
+        console.log('\n\n');
+        console.log('Retrieving role options...');
+        
+        const [rows, fields] = await db.promise().query('SELECT title as name, id as value FROM roles');
+        console.log('\n\n');
+        console.log('Role options:', rows);
+
+        if (rows.length === 0) {
+            console.log('\n\n');
+            console.log('Cannot add an employee because no roles are available.');
             return;
-        }else{
-            roleOptions = rows;
-            return roleOptions;
         }
-    });
 
-    await db.promise().query("SELECT CONCAT(first_name, ' ', last_name) as name, id as value FROM employees")
-    .then( ([rows,fields]) => {
-        if(rows.length === 0){
-            console.log('Cannot add a manager for the employee because no employees are available for the role.');
-            return;
-        }else{
-            //console.log(rows);
-            $noneManager = {name: "None", value: null}
+        roleOptions = rows;
 
-            rows.push($noneManager);
-            
-            inquirer.prompt([{
+        let employeeOptions = [];
+        console.log('\n\n');
+        console.log('Retrieving employee options...');
+        
+        const [rows2, fields2] = await db.promise().query('SELECT CONCAT(first_name, " ", last_name) as name, id as value FROM employees');
+        console.log('\n\n');
+        console.log('Employee options:', rows2);
+
+        const noneManager = { name: 'None', value: null };
+        employeeOptions = [...rows2, noneManager];
+
+        const answers = await inquirer.prompt([
+            {
                 type: 'input',
                 message: "What is the employee's first name?",
                 name: 'firstName',
-        
             },
             {
                 type: 'input',
                 message: "What is the employee's last name?",
                 name: 'lastName',
-        
             },
             {
                 type: 'list',
                 message: "What role does this employee have?",
                 name: 'roleID',
-                choices: roleOptions
+                choices: roleOptions,
             },
             {
                 type: 'list',
-                message: "Who is this employee's supervisor",
+                message: "Who is this employee's manager?",
                 name: 'managerID',
-                choices: rows
-            }])
-            .then(answers => {
-                console.log(answers);
-                return;
-                db.execute('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)',
-                [answers.firstName, answers.lastName, answers.roleID, answer.managerID], 
-                function(err, results,fields){
-                    if(err){
-                        console.error(err);
-                    }
-                    //console.log(results);
-                    //console.log(fields);
-                });
-                db.unprepare();
-            });
-        }
-    });    
+                choices: employeeOptions,
+            },
+        ]);
+
+        console.log('\n\n');
+        console.log(kleur.green('Adding employee to database...'));
+        return;
+        await db.promise().execute(
+            'INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)',
+            [answers.firstName, answers.lastName, answers.roleID, answers.managerID]
+        );
+
+        console.log('Employee added successfully!');
+    } catch (err) {
+        console.log('\n\n');
+        console.error(err);
+    }
 }
+  
+  
 
 async function init() {
     let keepPrompting = true;
@@ -299,7 +320,7 @@ async function init() {
                 console.log('Press any arrow key to continue.');
                 break;
     
-            case 'Quit program':
+            case 'Quit':
                 console.log('Quiting program');
                 db.end();
                 keepPrompting = false;
