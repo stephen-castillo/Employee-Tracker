@@ -200,12 +200,11 @@ async function addEmployee() {
 
         console.log('\n\n');
         console.log(kleur.green('Adding employee to database...'));
-        return;
         await db.promise().execute(
             'INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)',
             [answers.firstName, answers.lastName, answers.roleID, answers.managerID]
         );
-
+        console.log('\n\n');
         console.log('Employee added successfully!');
     } catch (err) {
         console.log('\n\n');
@@ -213,7 +212,21 @@ async function addEmployee() {
     }
 }
   
-  
+
+function viewBudget(){
+    db.promise().query("SELECT d.name AS 'Department', SUM(r.salary) AS 'Budget' FROM roles r JOIN department d ON r.department_id = d.id GROUP BY d.name")
+    .then( ([rows,fields]) => {
+        if(rows.length === 0){
+            console.log('\n\n');
+            console.log('There are no results.');
+        }else{
+            console.log('\n\n');
+            console.table(rows);
+        }
+    });
+}
+
+
 
 async function init() {
     let keepPrompting = true;
