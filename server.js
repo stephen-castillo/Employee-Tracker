@@ -5,9 +5,6 @@ const db = require('./assets/connection');
 const kleur = require('kleur');
 console.log(kleur.green('This message is in green!'));
 
-
-
-
 function viewDept(){
     db.promise().query("SELECT * FROM department")
     .then( ([rows,fields]) => {
@@ -212,9 +209,37 @@ async function addEmployee() {
     }
 }
   
+async function updateEmployeeRole(){
+    let thingie;
+    await db.promise().query("SELECT e.id, e.first_name, e.last_name, e.role_id, r.title FROM employees e LEFT JOIN roles r on e.role_id = r.id ")
+    .then( ([rows,fields]) => {
+        if(rows.length === 0){
+            console.log('\n\n');
+            console.log('There are no results.');
+        }else{
+            console.log('\n\n');
+            console.table(rows);
+            thingie = rows;
+            return thingie;
+        }
+        
+        
+    });
+    await inquirer.prompt(
+        {
+            type:'number',
+            message:'Please select employee whose role you wish to update. (number only)',
+            name: 'employeeID',
+            choices: thingie
+        }
+    )
+    .then((answers) =>{
+        console.log(answers);
+    });
+}
 
-function viewBudget(){
-    db.promise().query("SELECT d.name AS 'Department', SUM(r.salary) AS 'Budget' FROM roles r JOIN department d ON r.department_id = d.id GROUP BY d.name")
+async function viewBudget(){
+    await db.promise().query("SELECT d.name AS 'Department', SUM(r.salary) AS 'Budget' FROM roles r JOIN department d ON r.department_id = d.id GROUP BY d.name")
     .then( ([rows,fields]) => {
         if(rows.length === 0){
             console.log('\n\n');
