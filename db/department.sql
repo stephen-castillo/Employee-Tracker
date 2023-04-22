@@ -1,0 +1,1 @@
+CREATE TABLE department (id INT NOT NULL PRIMARY KEY auto_increment, name VARCHAR(30) NOT NULL);

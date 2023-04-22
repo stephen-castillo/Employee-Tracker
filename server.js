@@ -1,7 +1,7 @@
 const inquirer = require('inquirer');
 const ctable = require('console.table');
 const prompts = require('./assets/prompts');
-const db = require('./db/connection');
+const { db, init } = require('./db/connection');
 const kleur = require('kleur');
 //console.log(kleur.green('This message is in green!'));
 
@@ -576,7 +576,7 @@ async function viewBudget(){
 
 
 
-async function init() {
+async function runPrompt() {
     let keepPrompting = true;
   
     while (keepPrompting) {
@@ -696,6 +696,9 @@ async function init() {
   
 
 console.log('Starting..');
-(async () => {
-    await init();
-  })();
+init().then(() => {
+    console.log('Initialization completed successfully!');
+    runPrompt();
+}).catch(err => {
+    console.error(err);
+});
