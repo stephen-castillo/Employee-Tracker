@@ -210,32 +210,77 @@ async function addEmployee() {
 }
   
 async function updateEmployeeRole(){
-    let thingie;
-    await db.promise().query("SELECT e.id, e.first_name, e.last_name, e.role_id, r.title FROM employees e LEFT JOIN roles r on e.role_id = r.id ")
-    .then( ([rows,fields]) => {
+    let existing;
+    let roles;
+    let selections = {};
+
+    await db.promise().query("SELECT e.id, e.first_name, e.last_name, e.role_id, r.title FROM employees e LEFT JOIN roles r on e.role_id = r.id")
+    .then( ([rows, fields]) => {
         if(rows.length === 0){
             console.log('\n\n');
             console.log('There are no results.');
         }else{
             console.log('\n\n');
             console.table(rows);
-            thingie = rows;
-            return thingie;
+            existing = rows;
+            return existing;
         }
-        
-        
     });
+
     await inquirer.prompt(
         {
             type:'number',
             message:'Please select employee whose role you wish to update. (number only)',
             name: 'employeeID',
-            choices: thingie
+            choices: existing
         }
     )
     .then((answers) =>{
         console.log(answers);
+        selections.employee = answers
+        return selections;
     });
+
+    await db.promise().query("SELECT * FROM roles")
+    .then( ([rows, fields]) => {
+        if(rows.length === 0){
+            console.log('\n\n');
+            console.log('There are no results.');
+        }else{
+            console.log('\n\n');
+            console.table(rows);
+            roles = rows;
+            return roles;
+        }
+    });
+    
+    await inquirer.prompt(
+        {
+            type:'number',
+            message:'Please select the role you want to apply to this user. (number only)',
+            name: 'roleID',
+            choices: roles
+        }
+    )
+    .then((answers) =>{
+        console.log(answers);
+        selections.role = answers
+        return selections;
+    });
+    console.log(selections.role.roleID);
+    db.execute('UPDATE employees SET role_id = ? WHERE id = ?',
+        [selections.role.roleID, selections.employee.employeeID], 
+        function(err, results,fields){
+            if(err){
+                console.error(err);
+            }
+            console.log('\n\n');
+            //console.log(results);
+            //console.log(fields);
+            console.log('Employee role has been updated.');
+    });
+    db.unprepare();
+
 }
 
 async function viewBudget(){
