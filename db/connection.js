@@ -37,7 +37,7 @@ const init = () => {
             queries.forEach(q => {
                 db.query(q, (err, results, fields) => {
                     if (err) reject(err);
-                    console.log(`Executed ${q} statement successfully!`);
+                    //console.log(`Executed ${q} statement successfully!`);
                     resolve();
                 });
             });
