@@ -1,7 +1,7 @@
 const inquirer = require('inquirer');
 const ctable = require('console.table');
 const prompts = require('./assets/prompts');
-const db = require('./assets/connection');
+const db = require('./db/connection');
 const kleur = require('kleur');
 //console.log(kleur.green('This message is in green!'));
 
