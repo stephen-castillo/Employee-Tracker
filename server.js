@@ -121,6 +121,7 @@ async function addDepartment(){
 }
 
 async function addRole(){
+    let department;
     await db.promise().query('SELECT name, id as value FROM department')
     .then( ([rows,fields]) => {
         if(rows.length === 0){
@@ -129,56 +130,58 @@ async function addRole(){
             return;
         }else{
             //console.log(rows);
-
-            inquirer.prompt([{
-                type: 'input',
-                message: "What do you want to call the role title to be?",
-                name: 'roleName',
-        
-            },
-            {
-                type: 'input',
-                message: "What is the salary for this role?",
-                name: 'salary',
-        
-            },
-            {
-                type: 'list',
-                message: "What department does this role belong to?",
-                name: 'deptID',
-                choices: rows
-            }])
-            .then(answers => {
-                //console.log(answers);
-                db.execute('INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)',
-                [answers.roleName, answers.salary, answers.deptID], 
-                function(err, results,fields){
-                    if(err){
-                        console.error(err);
-                    }
-                    console.log('\n\n');
-                    //console.log(results);
-                    //console.log(fields);
-                    console.log(kleur.green('The role has been successfully added.'));
-                });
-                db.unprepare();
-            });
+            department = rows;
+            return department;
         }
+    });
+    await inquirer.prompt([{
+        type: 'input',
+        message: "What do you want to call the role title to be?",
+        name: 'roleName',
+
+    },
+    {
+        type: 'input',
+        message: "What is the salary for this role?",
+        name: 'salary',
+
+    },
+    {
+        type: 'list',
+        message: "What department does this role belong to?",
+        name: 'deptID',
+        choices: department
+    }])
+    .then(answers => {
+        //console.log(answers);
+        db.execute('INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)',
+        [answers.roleName, answers.salary, answers.deptID], 
+        function(err, results,fields){
+            if(err){
+                console.error(err);
+            }
+            console.log('\n\n');
+            //console.log(results);
+            //console.log(fields);
+            console.log(kleur.green('The role has been successfully added.'));
+        });
+        db.unprepare();
     });    
 }
 
 async function addEmployee() {
     try {
         let roleOptions = [];
-        console.log('\n\n');
+        console.log('');
         console.log(kleur.blue('Retrieving role options...'));
         
         const [rows, fields] = await db.promise().query('SELECT title as name, id as value FROM roles');
-        console.log('\n\n');
-        console.log(kleur.blue('Role options:', rows));
+        /* console.log('');
+        console.log(kleur.blue('Role options:'));
+        console.log(rows); */
 
         if (rows.length === 0) {
-            console.log('\n\n');
+            console.log('');
             console.log(kleur.red('Cannot add an employee because no roles are available.'));
             return;
         }
@@ -186,15 +189,15 @@ async function addEmployee() {
         roleOptions = rows;
 
         let employeeOptions = [];
-        console.log('\n\n');
+        console.log('');
         console.log(kleur.blue('Retrieving employee options...'));
         
         const [rows2, fields2] = await db.promise().query(`SELECT 
             CONCAT(first_name, " ", last_name) as name, 
             id as value
         FROM employees`);
-        console.log('\n\n');
-        console.log(kleur.blue('Employee options:', rows2));
+        /* console.log('');
+        console.log(kleur.blue('Employee options:', rows2)); */
 
         const noneManager = { name: 'None', value: null };
         employeeOptions = [...rows2, noneManager];
@@ -577,9 +580,7 @@ async function viewBudget(){
 
 
 async function runPrompt() {
-    let keepPrompting = true;
-  
-    while (keepPrompting) {
+    
       const answers = await inquirer.prompt(prompts);
   
         switch (answers.options) {
@@ -588,6 +589,7 @@ async function runPrompt() {
                 console.log('');
                 await viewDept();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'View all roles':
@@ -595,6 +597,7 @@ async function runPrompt() {
                 console.log('');
                 await viewRole();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'View all employees':
@@ -602,6 +605,7 @@ async function runPrompt() {
                 console.log('');
                 await viewEmployee();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'View employees by manager':
@@ -609,6 +613,7 @@ async function runPrompt() {
                 console.log('');
                 await viewByManager();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'View employees by department':
@@ -616,6 +621,7 @@ async function runPrompt() {
                 console.log('');
                 await viewByDepartment();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'Add a department':
@@ -623,6 +629,7 @@ async function runPrompt() {
                 console.log('');
                 await addDepartment();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'Add a role':
@@ -630,13 +637,15 @@ async function runPrompt() {
                 console.log('');
                 await addRole();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'Add an employee':
-                console.log(kleur.blue('Adding an employee:'));
                 console.log('');
+                console.log(kleur.blue('Adding an employee:'));
                 await addEmployee();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'Update an employee role':
@@ -644,6 +653,7 @@ async function runPrompt() {
                 console.log('');
                 await updateEmployeeRole();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'Update employee managers':
@@ -651,6 +661,7 @@ async function runPrompt() {
                 console.log('');
                 await updateEmployeeManager();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'Delete a department':
@@ -658,6 +669,7 @@ async function runPrompt() {
                 console.log('');
                 await deleteDepartment();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'Delete a role':
@@ -665,6 +677,7 @@ async function runPrompt() {
                 console.log('');
                 await deleteRole();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'Delete an employee':
@@ -672,6 +685,7 @@ async function runPrompt() {
                 console.log('');
                 await deleteEmployee();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'View the total utilized budget of a department':
@@ -679,6 +693,7 @@ async function runPrompt() {
                 console.log('');
                 await viewBudget();
                 console.log(kleur.blue('Press any arrow key to continue.'));
+                runPrompt();
                 break;
     
             case 'Quit':
@@ -692,7 +707,6 @@ async function runPrompt() {
                 break;
         }
     }
-}
   
 
 console.log('Starting..');
