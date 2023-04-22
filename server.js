@@ -501,6 +501,61 @@ async function deleteRole(){
 
 }
 
+async function deleteEmployee(){
+    let existing;
+    let deleteable;
+
+    await db.promise().query(`SELECT 
+        e.id,
+        CONCAT(e.first_name, ' ', e.last_name) AS 'Employee Name', 
+        r.title, 
+        r.salary,
+        CONCAT(e2.first_name, ' ', e2.last_name) AS 'Manager Name'
+    FROM employees e
+    LEFT JOIN roles r ON e.role_id = r.id
+    LEFT JOIN employees e2 ON e2.manager_id = e.id
+    ORDER BY e.id`)
+    .then( ([rows, fields]) => {
+        if(rows.length === 0){
+            console.log('\n\n');
+            console.log(kleur.red('There are no results.'));
+        }else{
+            console.log('\n\n');
+            console.table(rows);
+            existing = rows;
+            return existing;
+        }
+    });
+
+    await inquirer.prompt(
+        {
+            type:'number',
+            message:'Which employee do you want to delete. (number only)',
+            name: 'employeeID',
+            choices: existing
+        }
+    )
+    .then((answers) =>{
+        //console.log(answers);
+        deleteable = answers.employeeID;
+        return deleteable;
+    });
+
+    db.execute('DELETE FROM employees WHERE id = ?',
+        [deleteable], 
+        function(err, results,fields){
+            if(err){
+                console.error(err);
+            }
+            console.log('\n\n');
+            //console.log(results);
+            //console.log(fields);
+            console.log(kleur.red('Employee has been deleted.'));
+    });
+    db.unprepare();
+
+}
+
 async function viewBudget(){
     await db.promise().query(`SELECT 
         d.name AS 'Department',
