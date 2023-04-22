@@ -29,53 +29,22 @@ const init = () => {
         db.connect(err => {
         if (err) reject(err);
         console.log('Connected to MySQL server!');
-
-        db.query('DROP DATABASE employee_db', (err, results, fields) => {
-            if (err) reject(err);
-            console.log('Dropped the old database successfully!');
-        
-            db.query('CREATE DATABASE IF NOT EXISTS employee_db', (err, results, fields) => {
-                if (err) reject(err);
-                console.log('Created employee_db successfully!');
-                
-                db.query('USE employee_db', (err, results, fields) => {
-                if (err) reject(err);
-                console.log('Using employee_db database.');
-
-                    const departmentSql = fs.readFileSync(path.join(__dirname, '/department.sql'), 'utf-8');
-                        db.query(departmentSql, (err, results, fields) => {
-                            if (err) reject(err);
-                            console.log('Executed department.sql successfully!');
-
-                            const rolesSql = fs.readFileSync(path.join(__dirname, '/roles.sql'), 'utf-8');
-                            db.query(rolesSql, (err, results, fields) => {
-                                if (err) reject(err);
-                                console.log('Executed roles.sql successfully!');
-
-                                const employeesSql = fs.readFileSync(path.join(__dirname, '/employees.sql'), 'utf-8');
-                                db.query(employeesSql, (err, results, fields) => {
-                                    if (err) reject(err);
-                                    console.log('Executed employees.sql successfully!');
                                     
-                                    const seedSql = parseSqlFile(fs.readFileSync(path.join(__dirname, '/seeds.sql'), 'utf-8'));
-                                    const queries = removeEmptyQueries([...seedSql]);
-                                    //console.log(queries);
-                                    queries.forEach(q => {
-                                        db.query(q, (err, results, fields) => {
-                                            if (err) reject(err);
-                                            console.log('Executed seeds insert successfully!');
-                                            resolve();
-                                        });
-                                    });
-                                });
-                            });
-                        });
-                    });
+            const schemaSQL = parseSqlFile(fs.readFileSync(path.join(__dirname, '/schema.sql'), 'utf-8'));
+            const seedSQL = parseSqlFile(fs.readFileSync(path.join(__dirname, '/seeds.sql'), 'utf-8'));
+            const queries = removeEmptyQueries([...schemaSQL, ...seedSQL]);
+            //console.log(queries);
+            queries.forEach(q => {
+                db.query(q, (err, results, fields) => {
+                    if (err) reject(err);
+                    console.log(`Executed ${q} statement successfully!`);
+                    resolve();
                 });
             });
         });
     });
-};
+}
+
 
 module.exports = { db, init };
 
