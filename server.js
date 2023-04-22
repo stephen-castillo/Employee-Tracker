@@ -19,7 +19,9 @@ function viewDept(){
 }
 
 function viewRole(){
-    db.promise().query("SELECT * FROM roles")
+    db.promise().query(`SELECT r.id, r.title, r.salary, d.name as 'Department Name'
+    FROM roles r
+    LEFT JOIN department d ON r.department_id = d.id`)
     .then( ([rows,fields]) => {
         if(rows.length === 0){
             console.log('\n\n');
@@ -32,7 +34,16 @@ function viewRole(){
 }
 
 function viewEmployee(){
-    db.promise().query("SELECT * FROM employees")
+    db.promise().query(`SELECT 
+        e.id, 
+        e.first_name, 
+        e.last_name, 
+        r.title, 
+        r.salary, 
+        CONCAT(e2.first_name, ' ', e2.last_name) as Manager 
+    FROM employees e 
+    LEFT JOIN roles r ON e.role_id = r.id 
+    LEFT JOIN employees e2 ON e.manager_id = e2.id`)
     .then( ([rows,fields]) => {
         if(rows.length === 0){
             console.log('\n\n');
@@ -46,7 +57,14 @@ function viewEmployee(){
 
 
 function viewByManager(){
-    db.promise().query("SELECT CONCAT(m.first_name, ' ',  m.last_name) AS manager, e.id, e.first_name, e.last_name FROM employees e JOIN employees m ON e.manager_id = m.id WHERE e.manager_id IS NOT NULL")
+    db.promise().query(`SELECT 
+        CONCAT(m.first_name, ' ',  m.last_name) AS manager, 
+        e.id, 
+        e.first_name, 
+        e.last_name 
+    FROM employees e 
+    JOIN employees m ON e.manager_id = m.id 
+    WHERE e.manager_id IS NOT NULL`)
     .then( ([rows,fields]) => {
         if(rows.length === 0){
             console.log('\n\n');
@@ -59,7 +77,13 @@ function viewByManager(){
 }
 
 function viewByDepartment(){
-    db.promise().query("SELECT d.name AS `Department`, CONCAT(e.first_name,' ', e.last_name) AS Employee, r.title FROM employees e JOIN roles r ON r.id = e.role_id JOIN department d ON d.id = r.department_id ORDER BY d.name, r.title")
+    db.promise().query(`SELECT d.name AS 'Department',
+        CONCAT(e.first_name,' ', e.last_name) AS Employee, 
+        r.title 
+     FROM employees e 
+     JOIN roles r ON r.id = e.role_id 
+     JOIN department d ON d.id = r.department_id 
+     ORDER BY d.name, r.title`)
     .then( ([rows,fields]) => {
         if(rows.length === 0){
             console.log('\n\n');
@@ -163,7 +187,10 @@ async function addEmployee() {
         console.log('\n\n');
         console.log('Retrieving employee options...');
         
-        const [rows2, fields2] = await db.promise().query('SELECT CONCAT(first_name, " ", last_name) as name, id as value FROM employees');
+        const [rows2, fields2] = await db.promise().query(`SELECT 
+            CONCAT(first_name, " ", last_name) as name, 
+            id as value
+        FROM employees`);
         console.log('\n\n');
         console.log('Employee options:', rows2);
 
@@ -214,7 +241,14 @@ async function updateEmployeeRole(){
     let roles;
     let selections = {};
 
-    await db.promise().query("SELECT e.id, e.first_name, e.last_name, e.role_id, r.title FROM employees e LEFT JOIN roles r on e.role_id = r.id")
+    await db.promise().query(`SELECT 
+        e.id, 
+        e.first_name, 
+        e.last_name, 
+        e.role_id, 
+        r.title 
+    FROM employees e 
+    LEFT JOIN roles r on e.role_id = r.id`)
     .then( ([rows, fields]) => {
         if(rows.length === 0){
             console.log('\n\n');
@@ -283,8 +317,96 @@ async function updateEmployeeRole(){
 
 }
 
+async function updateEmployeeManager(){
+    let existing;
+    let manager;
+    let selections= {};
+
+    await db.promise().query(`SELECT 
+        e.id, 
+        e.first_name, 
+        e.last_name, 
+        e.role_id, 
+        r.title, 
+        CONCAT(e2.first_name, ' ', e2.last_name) AS manager 
+    FROM employees e 
+    LEFT JOIN roles r on e.role_id = r.id 
+    LEFT JOIN employees e2 ON e2.manager_id = e.id`)
+    .then( ([rows, fields]) => {
+        if(rows.length === 0){
+            console.log('\n\n');
+            console.log('There are no results.');
+        }else{
+            console.log('\n\n');
+            console.table(rows);
+            existing = rows;
+            return existing;
+        }
+    });
+
+    await inquirer.prompt(
+        {
+            type:'number',
+            message:'Please select employee whose manager you wish to update. (number only)',
+            name: 'employeeID',
+            choices: existing
+        }
+    )
+    .then((answers) =>{
+        console.log(answers);
+        selections.employee = answers
+        return selections;
+    });
+
+    await db.promise().query("SELECT id, CONCAT(first_name, ' ', last_name) as employee FROM employees")
+    .then( ([rows, fields]) => {
+        if(rows.length === 0){
+            console.log('\n\n');
+            console.log('There are no results.');
+        }else{
+            console.log('\n\n');
+            console.table(rows);
+            manager = rows;
+            return manager;
+        }
+    });
+    
+    await inquirer.prompt(
+        {
+            type:'number',
+            message:'Please select the employee you would like to assign as the manager. (number only)',
+            name: 'managerID',
+            choices: manager
+        }
+    )
+    .then((answers) =>{
+        console.log(answers);
+        selections.manager = answers
+        return selections;
+    });
+    //console.log(selections.manager.managerID);
+    db.execute('UPDATE employees SET manager_id = ? WHERE id = ?',
+        [selections.manager.managerID, selections.employee.employeeID], 
+        function(err, results,fields){
+            if(err){
+                console.error(err);
+            }
+            console.log('\n\n');
+            //console.log(results);
+            //console.log(fields);
+            console.log('Employee role has been updated.');
+    });
+    db.unprepare();
+
+}
+
 async function viewBudget(){
-    await db.promise().query("SELECT d.name AS 'Department', SUM(r.salary) AS 'Budget' FROM roles r JOIN department d ON r.department_id = d.id GROUP BY d.name")
+    await db.promise().query(`SELECT 
+        d.name AS 'Department',
+        SUM(r.salary) AS 'Budget'
+    FROM roles r 
+    JOIN department d ON r.department_id = d.id 
+    GROUP BY d.name`)
     .then( ([rows,fields]) => {
         if(rows.length === 0){
             console.log('\n\n');
